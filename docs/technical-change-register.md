@@ -82,10 +82,11 @@ Phần quyết định kỹ thuật được cập nhật có chủ đích trong
 ## 5. Lịch sử thay đổi tự động
 
 <!-- AUTO-GENERATED:START -->
-> Sinh tự động từ Git. Mốc mã gần nhất: `c43b0b64a37571023fcbaf5fbe0cb5661d1a724a` (2026-08-23). Không sửa trực tiếp phần này.
+> Sinh tự động từ Git. Mốc mã gần nhất: `f7784146757944069b7dc866d8762ed19151d508` (2026-08-23). Không sửa trực tiếp phần này.
 
 | Ngày | Commit | Nội dung | Tác giả | Số file |
 |---|---|---|---|---:|
+| 2026-08-23 | [`f778414`](https://github.com/sgodev2024/java-core/commit/f7784146757944069b7dc866d8762ed19151d508) | Apply green transformation interface palette | SGO Development | 6 |
 | 2026-08-23 | [`c43b0b6`](https://github.com/sgodev2024/java-core/commit/c43b0b64a37571023fcbaf5fbe0cb5661d1a724a) | Separate home from business navigation | SGO Development | 13 |
 | 2026-08-18 | [`e3a8ec3`](https://github.com/sgodev2024/java-core/commit/e3a8ec3a341e0445738a4614dc6b81da112b9deb) | Require browser origin deployment testing | SGO Development | 1 |
 | 2026-08-18 | [`591c6e3`](https://github.com/sgodev2024/java-core/commit/591c6e350beb23af4da76fa440629d1f4f4e449f) | Document Core-to-project delivery standard | SGO Development | 2 |
@@ -130,6 +131,19 @@ Phần quyết định kỹ thuật được cập nhật có chủ đích trong
 | 2026-08-15 | [`295b0e6`](https://github.com/sgodev2024/java-core/commit/295b0e6d6b200c9cd17cfe23d11683f8d04d19e8) | Initialize Java Core Platform | SGO Development | 57 |
 
 ## Chi tiết file theo commit
+
+### 2026-08-23 — Apply green transformation interface palette
+
+- Commit: [`f7784146757944069b7dc866d8762ed19151d508`](https://github.com/sgodev2024/java-core/commit/f7784146757944069b7dc866d8762ed19151d508)
+- Tác giả: SGO Development
+- Phạm vi file:
+
+- `M` `.gitignore`
+- `M` `core-platform-ba-requirements-v1.1.md`
+- `M` `docs/technical-change-register.md`
+- `M` `frontend/README.md`
+- `M` `frontend/app/globals.css`
+- `M` `frontend/tests/rendered-html.test.mjs`
 
 ### 2026-08-23 — Separate home from business navigation
 
