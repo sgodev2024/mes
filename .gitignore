@@ -34,3 +34,5 @@ backups/
 
 # Independent customer/business project repositories
 /revenue-intelligence/
+/mes/
+/ioc/
