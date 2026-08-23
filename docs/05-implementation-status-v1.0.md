@@ -13,3 +13,9 @@
 
 Kết luận: repository sẵn sàng làm nền kỹ thuật, chưa phải sản phẩm MES có nghiệp vụ và chưa được triển khai production.
 
+## Xác minh baseline ngày 2026-08-23
+
+- Next.js 16.3.1 production build và 7/7 frontend tests: đạt.
+- Java 21, Navigation Registry/API và PostgreSQL 17 Testcontainers: 9/9 backend tests đạt.
+- So sánh `backend`, `frontend`, `deploy` và CI với tag baseline: không có thay đổi source chạy.
+- Source được đẩy lên nhánh `main`; tag `core-v1.1.1-project-baseline` được bảo toàn trong repository dự án.
