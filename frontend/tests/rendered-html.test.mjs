@@ -68,6 +68,16 @@ test("approval demo is isolated from the production application shell", async ()
   assert.match(demo, /api\/v1\/approvals/);
 });
 
+test("home is a standalone top-level entry and business owns module navigation", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(source, /if\(section\.key==="home"\).*renderPageButton\(home\)/s);
+  assert.match(source, /className={`nav-section-trigger/);
+  assert.match(source, /rootItems\.length===0.*Chưa có module được cấp quyền/s);
+  assert.match(styles, /\.nav-section-trigger\s*\{/);
+  assert.match(styles, /\.nav-section-children\s*\{/);
+});
+
 test("ESG login copy, semantic icons and real operations APIs are enforced", async () => {
   const shell = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   const styles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
