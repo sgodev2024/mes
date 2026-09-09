@@ -199,10 +199,11 @@ Phần quyết định kỹ thuật được cập nhật có chủ đích trong
 ## 5. Lịch sử thay đổi tự động
 
 <!-- AUTO-GENERATED:START -->
-> Sinh tự động từ Git. Mốc mã gần nhất: `4a471868404ee223334ced565f25c8abc5bdf168` (2026-09-10). Không sửa trực tiếp phần này.
+> Sinh tự động từ Git. Mốc mã gần nhất: `27e8ce106eada043dabf5e787856c36b5fda8eb0` (2026-09-10). Không sửa trực tiếp phần này.
 
 | Ngày | Commit | Nội dung | Tác giả | Số file |
 |---|---|---|---|---:|
+| 2026-09-10 | [`27e8ce1`](https://github.com/sgodev2024/java-core/commit/27e8ce106eada043dabf5e787856c36b5fda8eb0) | chore: add MES server deployment configuration | sgodev2024 | 2 |
 | 2026-09-10 | [`4a47186`](https://github.com/sgodev2024/java-core/commit/4a471868404ee223334ced565f25c8abc5bdf168) | feat: implement MES operational platform baseline | sgodev2024 | 70 |
 | 2026-08-24 | [`d57ab26`](https://github.com/sgodev2024/java-core/commit/d57ab26843c1b0037a204c797abfc9bc74c3d1e3) | fix: accept empty successful API responses | SGO Viet Nam | 1 |
 | 2026-08-24 | [`0d8d3d7`](https://github.com/sgodev2024/java-core/commit/0d8d3d7289da6317a9ad648f32b735856befbbce) | fix: handle mandatory password change without infinite loading | SGO Viet Nam | 4 |
@@ -253,6 +254,15 @@ Phần quyết định kỹ thuật được cập nhật có chủ đích trong
 | 2026-08-15 | [`295b0e6`](https://github.com/sgodev2024/java-core/commit/295b0e6d6b200c9cd17cfe23d11683f8d04d19e8) | Initialize Java Core Platform | SGO Development | 57 |
 
 ## Chi tiết file theo commit
+
+### 2026-09-10 — chore: add MES server deployment configuration
+
+- Commit: [`27e8ce106eada043dabf5e787856c36b5fda8eb0`](https://github.com/sgodev2024/java-core/commit/27e8ce106eada043dabf5e787856c36b5fda8eb0)
+- Tác giả: sgodev2024
+- Phạm vi file:
+
+- `A` `deploy/ubuntu20/nginx-mes.sgodata.com.conf`
+- `A` `docker-compose.server.override.yml`
 
 ### 2026-09-10 — feat: implement MES operational platform baseline
 
