@@ -1,0 +1,16 @@
+services:
+  postgres:
+    ports: !override []
+
+  backend:
+    environment:
+      CORE_MFA_ENABLED: "false"
+      CORE_MFA_ALLOW_BOOTSTRAP: "false"
+      MES_PORTAL_MODE: "DISABLED"
+    ports: !override ["127.0.0.1:${MES_BACKEND_PORT:-18280}:8080"]
+
+  frontend:
+    build:
+      args:
+        NEXT_PUBLIC_CORE_API_URL: ${MES_PUBLIC_URL:-https://mes.sgodata.com}
+    ports: !override ["127.0.0.1:${MES_FRONTEND_PORT:-18281}:3000"]
