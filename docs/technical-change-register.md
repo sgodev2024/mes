@@ -199,10 +199,11 @@ Phần quyết định kỹ thuật được cập nhật có chủ đích trong
 ## 5. Lịch sử thay đổi tự động
 
 <!-- AUTO-GENERATED:START -->
-> Sinh tự động từ Git. Mốc mã gần nhất: `d57ab26843c1b0037a204c797abfc9bc74c3d1e3` (2026-08-24). Không sửa trực tiếp phần này.
+> Sinh tự động từ Git. Mốc mã gần nhất: `4a471868404ee223334ced565f25c8abc5bdf168` (2026-09-10). Không sửa trực tiếp phần này.
 
 | Ngày | Commit | Nội dung | Tác giả | Số file |
 |---|---|---|---|---:|
+| 2026-09-10 | [`4a47186`](https://github.com/sgodev2024/java-core/commit/4a471868404ee223334ced565f25c8abc5bdf168) | feat: implement MES operational platform baseline | sgodev2024 | 70 |
 | 2026-08-24 | [`d57ab26`](https://github.com/sgodev2024/java-core/commit/d57ab26843c1b0037a204c797abfc9bc74c3d1e3) | fix: accept empty successful API responses | SGO Viet Nam | 1 |
 | 2026-08-24 | [`0d8d3d7`](https://github.com/sgodev2024/java-core/commit/0d8d3d7289da6317a9ad648f32b735856befbbce) | fix: handle mandatory password change without infinite loading | SGO Viet Nam | 4 |
 | 2026-08-23 | [`56d5f9b`](https://github.com/sgodev2024/java-core/commit/56d5f9b58ec36c93d3b288daa9d673b99c9ddc69) | Record Core baseline verification | sgodev2024 | 1 |
@@ -252,6 +253,83 @@ Phần quyết định kỹ thuật được cập nhật có chủ đích trong
 | 2026-08-15 | [`295b0e6`](https://github.com/sgodev2024/java-core/commit/295b0e6d6b200c9cd17cfe23d11683f8d04d19e8) | Initialize Java Core Platform | SGO Development | 57 |
 
 ## Chi tiết file theo commit
+
+### 2026-09-10 — feat: implement MES operational platform baseline
+
+- Commit: [`4a471868404ee223334ced565f25c8abc5bdf168`](https://github.com/sgodev2024/java-core/commit/4a471868404ee223334ced565f25c8abc5bdf168)
+- Tác giả: sgodev2024
+- Phạm vi file:
+
+- `M` `.github/PULL_REQUEST_TEMPLATE.md`
+- `M` `backend/Dockerfile`
+- `M` `backend/pom.xml`
+- `M` `backend/src/main/java/vn/coreplatform/jobs/JobService.java`
+- `M` `backend/src/main/java/vn/coreplatform/kernel/KernelModule.java`
+- `A` `backend/src/main/java/vn/coreplatform/mes/MesProductionModule.java`
+- `A` `backend/src/main/java/vn/coreplatform/mes/operations/MesOperationalModuleController.java`
+- `A` `backend/src/main/java/vn/coreplatform/mes/operations/MesOperationalModuleService.java`
+- `A` `backend/src/main/java/vn/coreplatform/mes/reporting/MesCanonicalDataService.java`
+- `A` `backend/src/main/java/vn/coreplatform/mes/reporting/MesDailyReportingController.java`
+- `A` `backend/src/main/java/vn/coreplatform/mes/reporting/MesDailyReportingService.java`
+- `A` `backend/src/main/java/vn/coreplatform/mes/reporting/MesImportJobHandler.java`
+- `A` `backend/src/main/java/vn/coreplatform/mes/reporting/MesInternalDataController.java`
+- `A` `backend/src/main/java/vn/coreplatform/mes/reporting/MesInventoryReconciliationController.java`
+- `A` `backend/src/main/java/vn/coreplatform/mes/reporting/MesInventoryReconciliationService.java`
+- `A` `backend/src/main/java/vn/coreplatform/mes/reporting/MesMasterDataController.java`
+- `A` `backend/src/main/java/vn/coreplatform/mes/reporting/MesMasterDataService.java`
+- `A` `backend/src/main/java/vn/coreplatform/mes/reporting/MesPortalConfiguration.java`
+- `A` `backend/src/main/java/vn/coreplatform/mes/reporting/MesTemplateBootstrap.java`
+- `A` `backend/src/main/java/vn/coreplatform/mes/reporting/MesWorkbookParser.java`
+- `M` `backend/src/main/resources/application.yml`
+- `A` `backend/src/main/resources/db/migration/V20__mes_daily_reporting_slice.sql`
+- `A` `backend/src/main/resources/db/migration/V21__mes_data_contract_hardening.sql`
+- `A` `backend/src/main/resources/db/migration/V22__mes_internal_canonical_data.sql`
+- `A` `backend/src/main/resources/db/migration/V23__mes_master_data_and_inventory_reconciliation.sql`
+- `A` `backend/src/main/resources/db/migration/V24__mes_operational_modules_basic_runtime.sql`
+- `A` `backend/src/main/resources/db/migration/V25__align_mes_operational_seed_tabs.sql`
+- `M` `backend/src/test/java/vn/coreplatform/AbstractApiTest.java`
+- `M` `backend/src/test/java/vn/coreplatform/controlplane/ControlPlaneTest.java`
+- `M` `backend/src/test/java/vn/coreplatform/kernel/ModuleRegistrationTest.java`
+- `M` `backend/src/test/java/vn/coreplatform/kernel/NavigationApiTest.java`
+- `A` `backend/src/test/java/vn/coreplatform/mes/MesDailyReportingApiTest.java`
+- `A` `backend/src/test/java/vn/coreplatform/mes/MesMasterDataReconciliationApiTest.java`
+- `A` `backend/src/test/java/vn/coreplatform/mes/MesOperationalModuleApiTest.java`
+- `A` `backend/src/test/java/vn/coreplatform/mes/MesProductionModuleTest.java`
+- `A` `backend/src/test/java/vn/coreplatform/mes/MesWorkbookParserTest.java`
+- `A` `backend/src/test/java/vn/coreplatform/mes/reporting/MesRealWorkbookContractUatTest.java`
+- `A` `docker-compose.local.override.yml`
+- `M` `docker-compose.yml`
+- `M` `docs/01-business-analysis-v1.0.md`
+- `M` `docs/04-data-and-integration-contracts-v1.0.md`
+- `M` `docs/05-implementation-status-v1.0.md`
+- `A` `docs/09-mes-v1-training-task-backlog.md`
+- `A` `docs/10-mes-git-branch-commit-pr-checklist.md`
+- `A` `docs/11-mes-frontend-implementation-v1.0.md`
+- `A` `docs/12-mes-bi-portal-assessment-v1.0.md`
+- `A` `docs/13-mes-solution-blueprint-v1.0.md`
+- `A` `docs/14-mes-slice0-data-contract-pilot-v1.0.md`
+- `A` `docs/15-mes-report-catalog-and-dictionaries-v1.0.md`
+- `A` `docs/16-mes-internal-data-and-portal-readiness-v1.0.md`
+- `A` `docs/17-mes-uat-master-data-reconciliation-dashboard-v1.0.md`
+- `A` `docs/18-mes-dual-output-internal-portal-operating-model-v1.0.md`
+- `A` `docs/19-mes-demo-current-module-gap-analysis-v1.0.md`
+- `A` `docs/20-mes-technical-feasibility-module-standardization-analysis-v1.0.md`
+- `A` `docs/21-mes-navigation-baseline-v1.0.md`
+- `M` `docs/decisions.md`
+- `M` `docs/technical-change-register.md`
+- `M` `frontend/Dockerfile`
+- `M` `frontend/app/components/app-icon.tsx`
+- `M` `frontend/app/globals.css`
+- `A` `frontend/app/mes/[...path]/page.tsx`
+- `A` `frontend/app/mes/daily-reporting-center.tsx`
+- `A` `frontend/app/mes/mes-demo-data.ts`
+- `A` `frontend/app/mes/mes-executive-dashboard.tsx`
+- `A` `frontend/app/mes/mes-inventory-reconciliation.tsx`
+- `A` `frontend/app/mes/mes-live-api.ts`
+- `A` `frontend/app/mes/mes-master-data.tsx`
+- `A` `frontend/app/mes/mes-workspace.tsx`
+- `M` `frontend/app/page.tsx`
+- `M` `frontend/tests/rendered-html.test.mjs`
 
 ### 2026-08-24 — fix: accept empty successful API responses
 
