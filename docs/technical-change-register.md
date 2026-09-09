@@ -71,6 +71,123 @@ Phần quyết định kỹ thuật được cập nhật có chủ đích trong
 - Frontend approval demo được tách thành lazy chunk `app/demo/approval-workspace.tsx`; shell chỉ tải khi backend manifest cho phép view `approvals`.
 - Tài liệu BA chuẩn là `core-platform-ba-requirements-v1.1.md`; v1.0 chỉ còn giá trị lịch sử.
 
+### 3.5 Lát cắt frontend MES V1
+
+- Section adapter `business` của dự án được định danh giao diện là `MES`, đứng giữa `Trang chủ` và `Quản trị hệ thống`; không thay thế Core shell hoặc các màn hình quản trị.
+- Navigation Registry đóng góp đúng 18 view/route bất biến theo `MES-NAV-001`, không có lớp group trung gian. Contract test kiểm tra đủ nhãn, thứ tự 101–118, section và route không trùng.
+- Docker runtime MES dùng profile `mes`, vì vậy module demo `approval-domain` và menu `Nghiệp vụ mẫu/Đề nghị phê duyệt` không được nạp.
+- Frontend sử dụng Next.js hiện hành, bộ thành phần MES dùng chung, CSS xanh chuyển đổi responsive, KPI, bộ lọc, tab, biểu đồ, danh sách, popup chi tiết và trạng thái tải/lỗi/empty.
+- Bốn màn hình dùng API domain/canonical: `Dashboard điều hành`, `Kho & dòng than`, `Trung tâm báo cáo`, `Danh mục & ánh xạ dữ liệu`. Mười bốn màn hình còn lại dùng API MES basic runtime và PostgreSQL; `app/mes/mes-demo-data.ts` chỉ còn giữ metadata trình bày như tab/cột/nhãn, không cấp dữ liệu hiển thị.
+- `Portal/TKV` luôn hiện trong baseline nhưng action kết nối bị vô hiệu hóa an toàn khi API chưa cấu hình; không sinh dữ liệu gửi hoặc biên nhận giả.
+- Route cũ của lát cắt 11 menu được ánh xạ sang route canonical mới trong frontend để bookmark/direct URL không rơi về 404.
+- Navigation MES không phụ thuộc `ROLE_PLATFORM_ADMIN`; các page yêu cầu permission `MES_REPORT:READ` và được backend lọc theo vai trò/quyền của người dùng.
+- Baseline bất biến nằm tại `docs/21-mes-navigation-baseline-v1.0.md`; hướng dẫn triển khai frontend nằm tại `docs/11-mes-frontend-implementation-v1.0.md`.
+
+### 3.6 MES Solution Blueprint v1.0
+
+- Baseline được phê duyệt ngày 07/09/2026 tại `docs/13-mes-solution-blueprint-v1.0.md`.
+- MES phải vận hành được ngay mà không chờ Data Lake; Excel Portal và nhập trực tiếp là nguồn đầu vào giai đoạn đầu.
+- File gốc được lưu bất biến; dữ liệu qua staging, validation, xác nhận/phê duyệt rồi mới vào PostgreSQL và dashboard.
+- Giữ nguyên Core shell và quản trị; `MES` là menu cấp cao cùng cấp với Trang chủ và Quản trị hệ thống.
+- Giai đoạn hiện tại gồm Trung tâm báo cáo ngày, phát hành dữ liệu canonical, quản trị master data, đối soát nhập-xuất-tồn và Dashboard BGĐ canonical; tích hợp Portal được pending.
+- Data Lake, SCADA, cân, KCS/LIMS và ERP sẽ tham gia bằng adapter dùng chung ingestion contract; không phải dependency runtime ban đầu.
+- Frontend hiện không còn trình bày fixture như dữ liệu thật. Basic runtime đủ cho demo/UAT luồng chung, nhưng chỉ được coi là production-ready theo từng nghiệp vụ sau khi hoàn thành domain chuyên sâu, Data Contract, validation, RBAC và UAT tương ứng trong Blueprint.
+
+### 3.7 Slice 0 Data Contract và Slice 1 Trung tâm báo cáo ngày
+
+- Migration V20 tạo schema `mes`, sáu bảng tenant-scoped, PostgreSQL RLS, khóa ngoại và index cho Template Registry, import, issue, lịch báo cáo và nộp Portal.
+- Migration V21 bổ sung field contract, contract hash SHA-256, ngày hiệu lực/vòng đời, trigger bất biến và khóa ngoại ghép tenant; seed bốn vai trò MES và năm action permission.
+- Bootstrap runtime seed/backfill contract idempotent cho mọi tenant ngay sau Flyway; mỗi tenant chạy trong transaction có `TenantContext` để RLS vẫn fail-closed. Contract V20 rỗng được nâng một lần, contract đã có nội dung không bị sửa.
+- Sáu Data Contract pilot được seed theo tenant; parser `.xlsx` dùng Apache POI 5.5.1, kiểm tra chính xác tên file/worksheet/toàn bộ header, cột bắt buộc, kiểu/miền số, quy tắc nhà cung cấp/khách hàng, external link, checksum và giới hạn workbook.
+- Job `MES_XLSX_IMPORT` xử lý bất đồng bộ; dữ liệu nguồn và lỗi theo ô/dòng giữ đầy đủ traceability.
+- Claim job và phát hiện checksum dùng thao tác nguyên tử/advisory transaction lock; kiểm tra trùng xét `tenant_id + reporting_date + checksum_sha256`; job dài truyền heartbeat.
+- Workflow batch của Slice 1 thực thi `PENDING_CONFIRMATION → PENDING_APPROVAL → APPROVED → LOCKED`. Từ Slice 1.1, thao tác khóa đồng thời tạo bản phát hành canonical nội bộ trong cùng transaction.
+- Upload trùng trong cùng ngày báo cáo vẫn tạo audit batch `SUPERSEDED` nhưng không enqueue job/không sinh record; cùng file ở ngày báo cáo khác được phép tiếp nhận. Kỳ đã khóa không thể bị lô mới ghi đè.
+- Mười sáu endpoint MES được bảo vệ bằng `MES_REPORT`; hai endpoint dữ liệu canonical và endpoint trạng thái Portal dùng `READ`, còn endpoint submit Portal được giữ làm integration boundary nhưng bị từ chối khi mode `DISABLED`.
+- Frontend Next.js gắn view live vào Core shell, có lịch ngày, summary, import, preview record, issue detail, tab `Dữ liệu chuẩn hóa`, refresh-token retry và action theo trạng thái.
+- Audit log ghi các thay đổi chính; phê duyệt và phát hành nội bộ phát sự kiện bằng transactional outbox.
+- Danh mục 98/98 biểu mẫu và từ điển kỹ thuật nằm tại `docs/15-mes-report-catalog-and-dictionaries-v1.0.md`; owner/deadline/approver và KPI BGĐ vẫn chờ phê duyệt nghiệp vụ.
+- Kiểm thử ngày 08/09/2026: 13/13 backend test mục tiêu đạt trong cấu hình tách `core_admin`/`core_app` giống runtime; migration sạch đến V22 trong integration test; 8/8 frontend test và Next.js production build đạt.
+- Docker `mes-local` đã build lại và nâng runtime PostgreSQL từ V21 lên V22 ngày 08/09/2026; frontend, backend và PostgreSQL đều healthy, route `/mes/daily-reporting` và backend readiness trả HTTP 200.
+- Giới hạn production còn lại: antivirus adapter thật, master-data/cross-report validation, scheduler lịch chủ động, revision/mở khóa, UAT bốn mắt, Dashboard BGĐ dữ liệu thật và hợp đồng Portal.
+
+### 3.8 Slice 1.1 — Dữ liệu canonical nội bộ và ranh giới Portal
+
+- Migration V22 tạo `mes.internal_dataset_release`, `mes.canonical_product`, `mes.canonical_partner` và `mes.canonical_daily_metric`; cả bốn bảng dùng tenant RLS `ENABLE + FORCE`, khóa ngoại ghép tenant và index phục vụ truy vấn theo ngày/domain/dimension.
+- `internal_dataset_release` và `canonical_daily_metric` đã phát hành là bất biến. Mỗi batch có tối đa một release; unique key metric ngăn nhân đôi khi projection được gọi lại.
+- Khóa batch và phát hành release `PUBLISHED` chạy nguyên tử. Nếu normalize hoặc ghi canonical thất bại, toàn bộ thao tác khóa rollback; không tồn tại batch `LOCKED` thiếu dataset nội bộ.
+- Sáu Data Contract pilot được ánh xạ sang bốn domain canonical `PRODUCTION`, `RECEIPT`, `INVENTORY`, `ISSUE`. Mã sản phẩm/đối tác chưa được Data Steward xác nhận được giữ ở trạng thái `UNVERIFIED`, không tự suy đoán ghép mã.
+- Mỗi metric giữ lineage tới tenant, batch, source record, sheet, dòng, template code, contract version/hash và thời điểm phát hành. Event `mes.report.internal-published.v1` được ghi qua transactional outbox.
+- API đọc mới: `GET /api/v1/mes/internal-data/summary`, `GET /api/v1/mes/internal-data/metrics`; frontend bổ sung tab `Dữ liệu chuẩn hóa` và liên kết truy vết về batch nguồn. Đây là read model nội bộ, chưa phải Dashboard BGĐ hoàn chỉnh.
+- Cấu hình `MES_PORTAL_MODE` nhận `DISABLED`, `MANUAL_TRACKING`, `API`; mặc định Docker/application là `DISABLED`. Mode `API` vẫn trả trạng thái `NOT_CONFIGURED` và không dispatch khi chưa có contract.
+- Khi Portal bị tắt, `POST /api/v1/mes/import-batches/{id}/portal-submissions` trả `409 MES_PORTAL_INTEGRATION_DISABLED`, không đổi calendar, không tạo portal submission/job/outbox và không gọi mạng. `GET /api/v1/mes/integrations/portal/status` cung cấp capability chỉ đọc.
+- Gate ngày 08/09/2026: backend 13/13 test mục tiêu đạt, frontend 8/8 rendered test và production build đạt, Flyway V22 đạt trên PostgreSQL 17 integration test; runtime Docker local đã nâng lên V22 và ba service đều healthy.
+
+### 3.9 UAT workbook, master data, đối soát và Dashboard canonical
+
+- Migration V23 bổ sung optimistic versioning và trạng thái xác nhận cho canonical product/partner, khóa ngoại tenant tới người xác nhận, permission `MES_MASTER_DATA:READ|APPROVE` và index phục vụ Data Steward.
+- API master data cho phép lọc, xem và xác nhận sản phẩm/đối tác theo tenant; cập nhật có optimistic locking, validation, permission và audit log.
+- API `GET /api/v1/mes/reconciliation/inventory` tính `tồn cuối D-1 + nhập D - xuất D = tồn cuối D`, trả rõ `BALANCED`, `VARIANCE`, `INCOMPLETE` hoặc `MASTER_UNVERIFIED`; dữ liệu thiếu không được mặc định coi là cân.
+- Dashboard BGĐ và màn Kho/luân chuyển đọc trực tiếp canonical API, có bộ lọc ngày, loading/error/empty state và không sử dụng fixture demo.
+- Sáu workbook nguồn được chạy UAT bất biến với registry/parser thật: nhận diện đúng sáu contract nhưng đều không có dòng nghiệp vụ. Vì vậy UAT cấu trúc đạt; UAT giá trị và đối soát vẫn cần ít nhất ba ngày file đã điền dữ liệu.
+- Gate mục tiêu ngày 08/09/2026: Flyway sạch đến V23 trên PostgreSQL 17, 11/11 test MES/hồi quy mục tiêu và Next.js production build đạt; chi tiết tại `docs/17-mes-uat-master-data-reconciliation-dashboard-v1.0.md`.
+
+### 3.10 Mô hình MES hai đầu ra: nội bộ và Portal
+
+- Chốt MES có hai trách nhiệm chính thức: dữ liệu quản trị nội bộ dùng ngay khi Data Lake chưa sẵn sàng và Portal Gateway tự động nộp báo cáo khi có API.
+- Một pipeline `source → staging → validation → approval → canonical PUBLISHED` cấp dữ liệu cho cả Dashboard và Portal; cấm tạo pipeline chuẩn hóa hoặc bộ số liệu Portal riêng.
+- Hiện trạng chuyển tiếp: nhân sự vẫn import Excel thủ công trên Portal; MES không tự ghi `DELIVERED` hoặc biên nhận khi chưa có bằng chứng từ Portal.
+- Đích vận hành: nhập một lần tại MES, Portal Adapter sinh payload/file theo mapping version, gửi bất đồng bộ qua outbox/job, retry idempotent, lưu biên nhận và đối soát tổng/chi tiết.
+- Runtime vẫn `MES_PORTAL_MODE=DISABLED` cho tới khi có contract API thật. Đây là dependency triển khai của Slice 5, không phải loại bỏ Portal khỏi phạm vi sản phẩm.
+- Baseline chi tiết tại `docs/18-mes-dual-output-internal-portal-operating-model-v1.0.md`.
+
+### 3.11 Đối chiếu demo MES cũ và module Slice 1.2
+
+- Xác nhận Navigation Registry hiện tại giữ đủ 10/10 danh mục nghiệp vụ từng xuất hiện trong demo và bổ sung `Trung tâm báo cáo ngày`.
+- Demo cũ là HTML tĩnh, không có API. Bản hiện tại có 4/11 route dùng API thật: Dashboard canonical, Trung tâm báo cáo ngày, đối soát kho và master data một phần; 7 route còn lại vẫn là prototype có nhãn mô phỏng.
+- Giữ nguyên Core shell/Quản trị hệ thống thật; không phục hồi các màn quản trị tĩnh hoặc số KPI minh họa từ demo.
+- Tách ranh giới `Trung tâm báo cáo ngày` cho workbook Portal, `Cổng nhập liệu bổ sung` cho ngoại lệ/manual entry và `Báo cáo & đối soát` cho tổng hợp liên domain.
+- Ma trận chi tiết và backlog thay prototype bằng domain/API thật nằm tại `docs/19-mes-demo-current-module-gap-analysis-v1.0.md`.
+
+### 3.12 Phân tích hồ sơ kỹ thuật và chuẩn hóa module MES
+
+- Đã lọc nội dung phần mềm MES từ hồ sơ `BCNCKT-Mạo Khê 17122025`; không đưa phần đầu tư, phần cứng, camera, phòng IOC hoặc thiết kế nội bộ Data Lake vào domain MES.
+- Danh sách 94 dòng chức năng trong hồ sơ được phân tích là capability/use case, không phải 94 module. Đề xuất chuẩn hóa thành 9 bounded context MES, dùng lại 6 nhóm năng lực Core và 4 biên tích hợp.
+- Chuẩn hóa 45 dòng chức năng kho về một mô hình chứng từ + ledger, với transaction type và validation riêng; không tạo service/bảng lặp cho từng thao tác CRUD.
+- Đối chiếu công nghệ xác nhận Java/PostgreSQL phù hợp; đề xuất giữ Next.js và modular monolith hiện tại thay vì viết lại Angular hoặc tách microservices sớm.
+- Mười hai đề xuất `MES-TA-01` đến `MES-TA-12` đang chờ phê duyệt. Chưa thay đổi Blueprint, BA, backlog hoặc source chạy.
+- Phân tích và ma trận chi tiết tại `docs/20-mes-technical-feasibility-module-standardization-analysis-v1.0.md`.
+
+### 3.13 Baseline điều hướng MES toàn doanh nghiệp
+
+- Chủ dự án chốt cấu trúc cấp cao `Trang chủ → MES → Quản trị hệ thống`; `MES` có đúng 18 menu con theo thứ tự tại `docs/21-mes-navigation-baseline-v1.0.md`.
+- Bổ sung chính thức các miền An toàn lao động, Tài chính & Kế toán, Nhân sự & lao động, Đầu tư & dự án, KHCN & Chuyển đổi số và ESG vào phạm vi dữ liệu điều hành.
+- Baseline menu không được thêm/xóa/đổi tên/đổi thứ tự hoặc tạo cấp sidebar mới. Chức năng phát sinh phải bố trí bên trong một trong 18 menu bằng tab/view/action.
+- Permission có thể lọc khả năng nhìn thấy theo người dùng nhưng không thay đổi cấu trúc canonical của Navigation Registry.
+- Source local đã triển khai đủ 18 route canonical. Bốn màn hình dùng API hiện hữu; 14 màn hình là prototype chờ backend, có dữ liệu minh họa tách biệt và endpoint dự kiến.
+- Frontend duy trì redirect cho 10 route cũ để direct URL/bookmark không 404. Portal/TKV hiển thị trạng thái chưa cấu hình và khóa action gửi.
+- Gate ngày 09/09/2026: Next.js production build và 9/9 frontend test đạt; `MesProductionModuleTest` đạt trên Maven/Java 21; backend compile/package đạt; Docker local gồm PostgreSQL, backend và frontend đều healthy. Frontend trả HTTP 200, backend readiness `UP`.
+
+### 3.14 Khôi phục Dashboard điều hành theo mẫu demo Mạo Khê
+
+- Đổi nhãn điều hướng và tiêu đề từ `Dashboard Ban lãnh đạo` thành `Dashboard điều hành` trên backend Navigation Registry, frontend và tài liệu baseline.
+- Tái dựng bố cục tham chiếu từ demo đã duyệt: bộ lọc kỳ/phạm vi, 7 lát cắt điều hành, 6 KPI, nhịp sản xuất 14 ngày, quyết định cần ban hành, hiệu quả và rủi ro vận hành.
+- Không đưa số liệu demo cố định vào màn hình production. KPI, biểu đồ và ngoại lệ lấy từ API canonical hiện hữu; vùng An toàn đọc dữ liệu từ basic runtime của module An toàn lao động.
+- KPI và hành động drill-down mở đúng module MES tương ứng trong shell Core hiện tại.
+
+### 3.15 MES basic runtime cho 14 phân hệ
+
+- Migration V24 tạo `mes.operational_record`, tenant RLS, index theo module/tab/trạng thái và index `correlation_key` để liên thông dữ liệu giữa các phân hệ.
+- Migration V25 căn chỉnh seed của Kế hoạch, Sản xuất, Chất lượng và Tiêu thụ theo chính xác tên tab frontend; chỉ xóa/thay dòng có cờ `seeded=true`, không tác động dữ liệu người dùng.
+- Mười bốn phân hệ chưa có domain chuyên sâu dùng chung runtime cơ bản nhưng lưu dữ liệu thật trong PostgreSQL; tất cả tab đã được seed ba bản ghi để kiểm thử giao diện và workflow.
+- API chung hỗ trợ đọc overview/KPI/xu hướng/ngoại lệ, tạo bản ghi và chuyển workflow. Trạng thái chuẩn là `DRAFT → IN_PROGRESS → PENDING_APPROVAL → APPROVED → CLOSED`, kèm nhánh `REJECTED` và `REOPEN`.
+- Quyền `MES_OPERATION:READ|CREATE|UPDATE|APPROVE`, optimistic versioning, audit log và transactional outbox được áp dụng ở backend; System Administrator tiếp tục có toàn quyền theo Core policy.
+- Frontend bỏ nhãn `Prototype · Chờ API`, đọc API thật theo tab, có filter, bảng, biểu đồ cột, chi tiết, mã luồng liên thông, popup tạo, workflow và trạng thái tải/lỗi/empty.
+- Dashboard điều hành lấy KPI và điểm nóng An toàn lao động từ cùng API; các số liệu canonical sản xuất/kho vẫn giữ nguồn dữ liệu đã phát hành ở V22/V23.
+- `Portal/TKV` có dữ liệu theo dõi nội bộ nhưng nút gửi tiếp tục bị khóa cho đến khi có API contract Portal thật; hệ thống không tạo trạng thái gửi hoặc biên nhận giả.
+- Basic runtime là lát cắt hoạt động để demo/UAT và chuẩn hóa luồng chung. Mô hình chuyên ngành, công thức, validation chéo và adapter nguồn sẽ thay từng phần theo Blueprint mà không đổi baseline menu.
+- Gate ngày 09/09/2026: frontend production build và 9/9 source guard đạt; backend package Java 21 đạt; `MesProductionModuleTest` 2/2 và `MesOperationalModuleApiTest` 1/1 đạt trên PostgreSQL 17 sạch. Docker local đã nâng Flyway tới V25 với 14 module, 68 tab, 204 bản ghi seed và ba service đều healthy.
+
 ## 4. Quy tắc cập nhật tài liệu
 
 1. Thay đổi kiến trúc, security, API contract, migration hoặc vận hành phải cập nhật phần quyết định ở trên trong cùng pull request.

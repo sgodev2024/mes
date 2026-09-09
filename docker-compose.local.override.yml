@@ -1,0 +1,12 @@
+services:
+  postgres:
+    ports: !override ["127.0.0.1:55434:5432"]
+
+  backend:
+    ports: !override ["127.0.0.1:8281:8080"]
+
+  frontend:
+    build:
+      args:
+        NEXT_PUBLIC_CORE_API_URL: http://localhost:8281
+    ports: !override ["127.0.0.1:3201:3000"]

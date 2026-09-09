@@ -14,7 +14,7 @@ class ModuleRegistrationTest extends AbstractApiTest {
 
   @Test void registryBootsWithAllContributorsInDependencyOrder() {
     var keys = registry.modules().stream().map(ModuleDescriptor::key).toList();
-    assertThat(keys).contains("kernel", "local-identity", "permission", "dynamic-resource", "file-management", "control-plane");
+    assertThat(keys).contains("kernel", "local-identity", "permission", "dynamic-resource", "file-management", "control-plane", "mes-production");
     assertThat(keys.indexOf("permission")).isLessThan(keys.indexOf("dynamic-resource"));
     assertThat(keys.indexOf("dynamic-resource")).isLessThan(keys.indexOf("control-plane"));
   }

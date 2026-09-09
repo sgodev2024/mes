@@ -20,7 +20,7 @@ services:
       DB_PASSWORD: core_app_dev
       DB_MIGRATION_USER: core_admin
       DB_MIGRATION_PASSWORD: core_admin_dev
-      SPRING_PROFILES_ACTIVE: demo
+      SPRING_PROFILES_ACTIVE: mes
       CORE_BOOTSTRAP_ADMIN_PASSWORD: Core@2026
       CORE_BOOTSTRAP_MFA_CODE: "123456"
       CORE_MFA_ENABLED: "true"
@@ -28,6 +28,7 @@ services:
       CORE_OUTBOX_ENABLED: "true"
       CORE_JOBS_ENABLED: "true"
       CORE_JOBS_SCHEDULER_ENABLED: "true"
+      MES_PORTAL_MODE: "DISABLED"
     ports: ["8080:8080"]
     volumes: ["core_fileroot:/data/files"]
     depends_on:

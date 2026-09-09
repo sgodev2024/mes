@@ -19,7 +19,8 @@ class NavigationApiTest extends AbstractApiTest {
     assertThat(itemKeys(body, "system-administration")).contains("core.modules", "core.resources", "core.users",
         "core.organizations", "core.access", "core.activity", "core.files", "core.settings");
     assertThat(itemKeys(body, "business")).contains("module.approval-domain.demo-group",
-        "module.approval-domain.approvals");
+        "module.approval-domain.approvals", "module.mes-production.dashboard",
+        "module.mes-production.data-mapping");
     assertThat(body.has("workspaces")).isFalse();
   }
 
@@ -54,10 +55,32 @@ class NavigationApiTest extends AbstractApiTest {
     jdbc.update("update platform.module set status='DISABLED' where module_key='approval-domain'");
     try {
       assertThat(itemKeys(navigation(adminToken()), "home")).containsExactly("core.home");
-      assertThat(itemKeys(navigation(adminToken()), "business")).isEmpty();
+      assertThat(itemKeys(navigation(adminToken()), "business"))
+          .contains("module.mes-production.dashboard", "module.mes-production.data-mapping")
+          .doesNotContain("module.approval-domain.demo-group", "module.approval-domain.approvals");
     } finally {
       jdbc.update("update platform.module set status='HEALTHY' where module_key='approval-domain'");
     }
+  }
+
+  @Test void mesViewerRoleDiscoversMesPagesWithoutPlatformAdministratorAuthority() throws Exception {
+    var email = "mes-viewer-navigation-" + suffix() + "@test.local";
+    seedDefaultTenantAccount(email, "ApplicationPass@2026");
+    var tenantId = jdbc.queryForObject("select id from platform.tenant where tenant_key='default'", UUID.class);
+    var accountId = jdbc.queryForObject(
+        "select id from identity.account where tenant_id=? and email=?", UUID.class, tenantId, email);
+    jdbc.update("""
+        insert into identity.account_role(tenant_id,account_id,role_id)
+        select ?,?,id from identity.role where tenant_id=? and code='mes-report-viewer'
+        on conflict do nothing
+        """, tenantId, accountId, tenantId);
+    jdbc.update("update identity.permission_revision set revision=revision+1 where tenant_id=?", tenantId);
+
+    var body = navigation(login(email, "ApplicationPass@2026"));
+    assertThat(keys(body.path("sections"))).containsExactly("home", "business");
+    assertThat(itemKeys(body, "business"))
+        .contains("module.mes-production.dashboard", "module.mes-production.reporting-center",
+            "module.mes-production.data-mapping", "module.mes-production.portal-tkv");
   }
 
   @Test void preferencesRoundTripAndDiscardUnauthorizedKeys() throws Exception {

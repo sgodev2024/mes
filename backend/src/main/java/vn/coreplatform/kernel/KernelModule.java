@@ -13,7 +13,7 @@ public class KernelModule implements ModuleContributor {
   @Override public List<NavigationWorkspaceDescriptor> navigationWorkspaces() {
     return List.of(
         new NavigationWorkspaceDescriptor("home", "Trang chủ", "navigation.section.home", "home", "BUSINESS", 10, ""),
-        new NavigationWorkspaceDescriptor("business", "Nghiệp vụ", "navigation.section.business", "apps", "BUSINESS", 20, ""),
+        new NavigationWorkspaceDescriptor("business", "MES", "navigation.section.mes", "factory", "BUSINESS", 20, ""),
         new NavigationWorkspaceDescriptor("system-administration", "Quản trị hệ thống", "navigation.section.systemAdministration", "settings", "ADMIN", 90, "ROLE_PLATFORM_ADMIN"));
   }
 

@@ -1,39 +1,51 @@
-## Outcome
+## Task
 
-<!-- Kết quả nghiệp vụ/platform mà PR này mang lại, tham chiếu story ID nếu có (vd: E0-S01) -->
+- Mã task: `MES-___`
+- Kết quả cần đạt:
+- Dependency đã hoàn thành:
 
-## Owner module
+## Phạm vi thay đổi
 
-<!-- Module/khu vực chịu ảnh hưởng: identity / permission / dynamicresource / filemanagement / controlplane / shared -->
+- Đã thay đổi:
+- Không thay đổi:
+- Module/file chính:
 
-## Architecture references
+## Ảnh hưởng kỹ thuật
 
-<!-- Tài liệu/ADR liên quan: CP-ARCH-002, CP-DATA-003, 01-TIS... -->
+- [ ] Frontend
+- [ ] Backend/API
+- [ ] Database/migration
+- [ ] Permission/data scope
+- [ ] Navigation
+- [ ] Core boundary
 
-## Tenant/security impact
+Mô tả ảnh hưởng và tính tương thích:
 
-- [ ] Không thay đổi hành vi tenant isolation
-- [ ] Đã review ảnh hưởng bảo mật (nếu có, mô tả)
+## Kiểm thử và bằng chứng
 
-## Database/migration impact
+| Kiểm tra | Lệnh/kịch bản | Kết quả |
+|---|---|---|
+| Build |  |  |
+| Automated test |  |  |
+| Docker/health |  |  |
+| Permission/validation |  |  |
 
-- [ ] Không thay đổi schema
-- [ ] Có migration mới (liệt kê file + expand-contract)
+Ảnh, video, API request/response hoặc log nghiệm thu:
 
-## Transaction/failure behavior
+## Checklist người tạo PR
 
-<!-- Mô tả ngắn: thao tác này fail giữa chừng thì sao? -->
+- [ ] PR chỉ chứa một task và đúng acceptance criteria.
+- [ ] Tôi đã tự review toàn bộ diff.
+- [ ] Không sửa Core hoặc màn hình quản trị ngoài phạm vi được duyệt.
+- [ ] Không có secret, `.env`, key, dump hoặc dữ liệu khách hàng thật.
+- [ ] Có validation, loading/empty/error và permission phù hợp với phạm vi.
+- [ ] Test/build liên quan đã chạy thành công.
+- [ ] Migration mới là migration tiến; không sửa migration đã chạy.
+- [ ] Tài liệu kỹ thuật đã được cập nhật nếu hành vi thay đổi.
+- [ ] Mã do AI hỗ trợ đã được tôi đọc hiểu và tự kiểm thử.
 
-## API/event impact
+## Rủi ro và công việc còn lại
 
-- [ ] Không thay đổi contract
-- [ ] Có thay đổi contract (chú thích compatibility)
-
-## Required tests
-
-<!-- Test mới/sửa kèm theo thay đổi; tên class + điều kiện nghiệm thu -->
-
-## Documentation impact
-
-- [ ] Không cần cập nhật tài liệu
-- [ ] Đã cập nhật README/docs tương ứng
+- Rủi ro/giới hạn:
+- Việc không thuộc PR này:
+- Kế hoạch xử lý tiếp:

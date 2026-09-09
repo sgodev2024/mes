@@ -17,6 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.junit.jupiter.api.BeforeEach;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -41,6 +42,22 @@ public abstract class AbstractApiTest {
   @Autowired protected ObjectMapper json;
   @Autowired protected JdbcTemplate jdbc;
   @Autowired protected PasswordEncoder encoder;
+
+  /**
+   * Flyway giữ nguyên tài khoản bootstrap đã phát hành, còn integration test cần một
+   * credential xác định và độc lập với hash demo trong migration V1. Chỉ reset dữ
+   * liệu của PostgreSQL test trước từng test case; runtime/production không đi qua
+   * lớp này.
+   */
+  @BeforeEach
+  void prepareTestAdministrator() {
+    jdbc.update("""
+        update identity.account
+        set password_hash=?, password_algo='ARGON2ID', enabled=true,
+            failed_attempts=0, locked_until=null
+        where email='admin@core.local'
+        """, encoder.encode(ADMIN_TEST_PASSWORD));
+  }
 
   @DynamicPropertySource
   static void testProperties(DynamicPropertyRegistry registry) {

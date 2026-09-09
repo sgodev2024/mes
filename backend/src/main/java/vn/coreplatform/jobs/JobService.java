@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import vn.coreplatform.shared.ApiExceptionHandler.ApiProblem;
 
@@ -63,6 +64,7 @@ public class JobService {
   }
 
   /** E7-S02: gia hạn lease — chỉ owner hiện tại gia hạn được. */
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public boolean heartbeat(UUID jobId, String workerId) {
     return jdbc.update("update async.job set heartbeat_at=now(), lease_until=now() + make_interval(secs => ?) where id=? and leased_by=? and status='RUNNING'",
         leaseSeconds, jobId, workerId) > 0;
