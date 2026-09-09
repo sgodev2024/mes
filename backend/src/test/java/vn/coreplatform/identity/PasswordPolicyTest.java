@@ -39,6 +39,20 @@ class PasswordPolicyTest extends AbstractApiTest {
   }
 
   @Test
+  void legacyBcryptHashWithoutEncoderIdIsAcceptedAndRehashed() throws Exception {
+    var email = "e3-legacy-raw-" + suffix() + "@test.local";
+    seedDefaultTenantAccount(email, "WillBeReplaced@1");
+    var legacy = new BCryptPasswordEncoder(12).encode("LegacyRawPass@2026x");
+    jdbc.update("update identity.account set password_hash=?,password_algo='BCRYPT' where email=?", legacy, email);
+
+    login(email, "LegacyRawPass@2026x");
+
+    var hash = jdbc.queryForObject("select password_hash from identity.account where email=?", String.class, email);
+    assertThat(hash).as("raw bcrypt login must upgrade the stored hash").startsWith("{argon2}");
+    assertThat(jdbc.queryForObject("select password_algo from identity.account where email=?", String.class, email)).isEqualTo("ARGON2ID");
+  }
+
+  @Test
   void accountLocksAfterFiveFailedAttempts() throws Exception {
     var email = "e3-lock-" + suffix() + "@test.local";
     seedDefaultTenantAccount(email, "CorrectHorse@9x");

@@ -28,7 +28,12 @@ public class SecurityConfig {
     var encoders = new LinkedHashMap<String, PasswordEncoder>();
     encoders.put("argon2", Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8());
     encoders.put("bcrypt", new BCryptPasswordEncoder(12));
-    return new DelegatingPasswordEncoder("argon2", encoders);
+    var delegating = new DelegatingPasswordEncoder("argon2", encoders);
+    // V1 stored the bootstrap account as a raw $2a$ BCrypt hash, before encoder IDs
+    // were introduced. Accept that exact legacy format once; AuthController then
+    // upgrades it to the current {argon2} representation after a successful login.
+    delegating.setDefaultPasswordEncoderForMatches(encoders.get("bcrypt"));
+    return delegating;
   }
   @Bean CorsConfigurationSource corsConfigurationSource(){ var c=new CorsConfiguration(); c.setAllowedOriginPatterns(List.of("http://localhost:*","http://127.0.0.1:*","https://*.chatgpt.site","https://corejava.sgodata.com")); c.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS")); c.setAllowedHeaders(List.of("Authorization","Content-Type","X-Correlation-Id")); c.setAllowCredentials(false); var s=new UrlBasedCorsConfigurationSource(); s.registerCorsConfiguration("/**",c); return s; }
   @Bean SecurityFilterChain security(HttpSecurity http, TokenFilter tokenFilter) throws Exception { return http.csrf(x->x.disable()).cors(x->{}).sessionManagement(x->x.sessionCreationPolicy(SessionCreationPolicy.STATELESS)).authorizeHttpRequests(x->x.requestMatchers("/api/v1/auth/login","/api/v1/auth/mfa","/api/v1/auth/refresh","/actuator/health/**","/v3/api-docs/**","/swagger-ui/**").permitAll().anyRequest().authenticated()).addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class).build(); }
