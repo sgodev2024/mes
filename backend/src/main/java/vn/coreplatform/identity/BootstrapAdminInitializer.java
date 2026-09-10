@@ -18,7 +18,8 @@ class BootstrapAdminInitializer implements CommandLineRunner {
          set password_hash=?, password_algo='ARGON2ID', password_changed_at=now(),
              failed_attempts=0, locked_until=null
        where email='admin@core.local'
-         and (must_change_password=true or (password_algo='BCRYPT' and password_hash=?))
+         and (must_change_password=true
+              or (password_algo='BCRYPT' and password_hash in (?, '{bcrypt}' || ?)))
       """;
   private final JdbcTemplate jdbc;
   private final PasswordEncoder encoder;
@@ -38,6 +39,7 @@ class BootstrapAdminInitializer implements CommandLineRunner {
     if (production && (bootstrapPassword.isBlank() || "Core@2026".equals(bootstrapPassword)))
       throw new IllegalStateException("Production yêu cầu CORE_BOOTSTRAP_ADMIN_PASSWORD mạnh và không được dùng giá trị demo");
     if (!bootstrapPassword.isBlank())
-      jdbc.update(CLAIM_SQL, encoder.encode(bootstrapPassword), LEGACY_BOOTSTRAP_HASH);
+      jdbc.update(CLAIM_SQL, encoder.encode(bootstrapPassword),
+          LEGACY_BOOTSTRAP_HASH, LEGACY_BOOTSTRAP_HASH);
   }
 }

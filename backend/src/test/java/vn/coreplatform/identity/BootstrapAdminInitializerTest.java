@@ -34,6 +34,8 @@ class BootstrapAdminInitializerTest {
 
     new BootstrapAdminInitializer(jdbc, encoder, environment, "Strong-Production-Secret-2026").run();
 
-    verify(jdbc).update(BootstrapAdminInitializer.CLAIM_SQL, "{argon2}hash", BootstrapAdminInitializer.LEGACY_BOOTSTRAP_HASH);
+    verify(jdbc).update(BootstrapAdminInitializer.CLAIM_SQL, "{argon2}hash",
+        BootstrapAdminInitializer.LEGACY_BOOTSTRAP_HASH,
+        BootstrapAdminInitializer.LEGACY_BOOTSTRAP_HASH);
   }
 }
