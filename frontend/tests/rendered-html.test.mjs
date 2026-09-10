@@ -152,6 +152,14 @@ test("MES executive dashboard, inventory reconciliation and master data use live
   assert.match(dashboard, /Quyết định cần ban hành/);
   assert.match(dashboard, /Hiệu quả theo sản phẩm/);
   assert.match(dashboard, /An toàn & rủi ro vận hành/);
+  assert.match(dashboard, /role="tablist"/);
+  assert.match(dashboard, /Kế hoạch – dự báo/);
+  assert.match(dashboard, /Tiêu thụ – dòng than/);
+  assert.match(dashboard, /fixtureKey:"mes-occupational-safety"/);
+  assert.match(dashboard, /fixtureKey:"mes-materials-equipment"/);
+  assert.match(dashboard, /fixtureKey:"mes-finance-accounting"/);
+  assert.match(dashboard, /fixtureKey:"mes-esg"/);
+  assert.match(dashboard, /<DomainDashboard domain=\{active\} definition=\{fixture\}/);
   assert.doesNotMatch(dashboard, /Dashboard Ban lãnh đạo/);
   assert.doesNotMatch(dashboard, /mesDemoTables/);
   assert.match(reconciliation, /BALANCED|VARIANCE|INCOMPLETE|MASTER_UNVERIFIED/);
