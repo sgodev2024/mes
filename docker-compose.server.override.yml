@@ -6,6 +6,7 @@ services:
     environment:
       CORE_MFA_ENABLED: "false"
       CORE_MFA_ALLOW_BOOTSTRAP: "false"
+      CORE_CORS_ALLOWED_ORIGIN_PATTERNS: "https://mes.sgodata.com"
       MES_PORTAL_MODE: "DISABLED"
     ports: !override ["127.0.0.1:${MES_BACKEND_PORT:-18280}:8080"]
 

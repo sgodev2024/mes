@@ -11,6 +11,12 @@ type AuthStep = "login" | "mfa";
 class ApiProblemError extends Error {
   constructor(message: string, readonly code?: string) { super(message); }
 }
+async function readApiBody(response: Response): Promise<Record<string, any>> {
+  const text = await response.text();
+  if (!text) return {};
+  try { return JSON.parse(text) as Record<string, any>; }
+  catch { return { detail: text }; }
+}
 const API_URL = process.env.NEXT_PUBLIC_CORE_API_URL ?? "https://api.corejava.sgodata.com";
 const LEGACY_MES_ROUTES: Record<string,string> = {
   "/mes/daily-reporting":"/mes/reporting-center",
@@ -125,7 +131,7 @@ function LoginScreen({ onAuthenticated }: { onAuthenticated: (session: SessionDa
     setLoading(true);
     try {
       const response = await fetch(`${API_URL}/api/v1/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password, remember }) });
-      const body = await response.json();
+      const body = await readApiBody(response);
       if (!response.ok) throw new Error(body.detail ?? "Không thể đăng nhập.");
       if (body.mfaRequired === false && body.session?.accessToken) {
         onAuthenticated(body.session as SessionData, remember);
@@ -145,7 +151,7 @@ function LoginScreen({ onAuthenticated }: { onAuthenticated: (session: SessionDa
     setLoading(true);
     try {
       const response = await fetch(`${API_URL}/api/v1/auth/mfa`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ challengeId, code: otp, remember }) });
-      const body = await response.json();
+      const body = await readApiBody(response);
       if (!response.ok) throw new Error(body.detail ?? "Mã xác thực không hợp lệ.");
       onAuthenticated(body as SessionData, remember);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Không thể xác thực."); }
