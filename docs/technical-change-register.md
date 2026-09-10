@@ -199,10 +199,11 @@ Phần quyết định kỹ thuật được cập nhật có chủ đích trong
 ## 5. Lịch sử thay đổi tự động
 
 <!-- AUTO-GENERATED:START -->
-> Sinh tự động từ Git. Mốc mã gần nhất: `03895eeb744d9fdc0d9a9ac769fc49af10e78e22` (2026-09-10). Không sửa trực tiếp phần này.
+> Sinh tự động từ Git. Mốc mã gần nhất: `7714637395ba9285fa032657c2c7b26c6efa0621` (2026-09-10). Không sửa trực tiếp phần này.
 
 | Ngày | Commit | Nội dung | Tác giả | Số file |
 |---|---|---|---|---:|
+| 2026-09-10 | [`7714637`](https://github.com/sgodev2024/java-core/commit/7714637395ba9285fa032657c2c7b26c6efa0621) | fix: recognize prefixed legacy bootstrap hash | sgodev2024 | 2 |
 | 2026-09-10 | [`03895ee`](https://github.com/sgodev2024/java-core/commit/03895eeb744d9fdc0d9a9ac769fc49af10e78e22) | fix: claim legacy bootstrap administrator safely | sgodev2024 | 2 |
 | 2026-09-10 | [`a6bf755`](https://github.com/sgodev2024/java-core/commit/a6bf755a73a94b91a5ea626b5008f0d60656402f) | fix: support legacy bootstrap bcrypt hashes | sgodev2024 | 2 |
 | 2026-09-10 | [`27e8ce1`](https://github.com/sgodev2024/java-core/commit/27e8ce106eada043dabf5e787856c36b5fda8eb0) | chore: add MES server deployment configuration | sgodev2024 | 2 |
@@ -256,6 +257,15 @@ Phần quyết định kỹ thuật được cập nhật có chủ đích trong
 | 2026-08-15 | [`295b0e6`](https://github.com/sgodev2024/java-core/commit/295b0e6d6b200c9cd17cfe23d11683f8d04d19e8) | Initialize Java Core Platform | SGO Development | 57 |
 
 ## Chi tiết file theo commit
+
+### 2026-09-10 — fix: recognize prefixed legacy bootstrap hash
+
+- Commit: [`7714637395ba9285fa032657c2c7b26c6efa0621`](https://github.com/sgodev2024/java-core/commit/7714637395ba9285fa032657c2c7b26c6efa0621)
+- Tác giả: sgodev2024
+- Phạm vi file:
+
+- `M` `backend/src/main/java/vn/coreplatform/identity/BootstrapAdminInitializer.java`
+- `M` `backend/src/test/java/vn/coreplatform/identity/BootstrapAdminInitializerTest.java`
 
 ### 2026-09-10 — fix: claim legacy bootstrap administrator safely
 
