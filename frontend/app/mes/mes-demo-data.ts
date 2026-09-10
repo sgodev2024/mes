@@ -11,6 +11,8 @@ export type MesPrototypeDefinition = {
   sourceMode: string;
   tabs: string[];
   columns: MesColumn[];
+  tabColumns?: Record<string, MesColumn[]>;
+  tabActions?: Record<string, string>;
   kpis: MesKpi[];
   trendLabel: string;
   trend: number[];
@@ -94,13 +96,29 @@ export const mesPrototypeDefinitions: Record<string, MesPrototypeDefinition> = {
     rows:[{indicator:"Doanh thu tiêu thụ",organization:"Toàn Công ty",period:"09/2026",plan:"1.168 tỷ",actual:"1.248 tỷ",variance:"+80 tỷ",updated:"09/09 15:00",status:"Đạt"},{indicator:"Chi phí sản xuất",organization:"Toàn Công ty",period:"09/2026",plan:"1.248 tỷ",actual:"982 tỷ",variance:"-266 tỷ",updated:"09/09 15:00",status:"Trong ngân sách"},{indicator:"Công nợ quá hạn",organization:"Phòng TCKT",period:"09/2026",plan:"≤ 30 tỷ",actual:"46,2 tỷ",variance:"+16,2 tỷ",updated:"09/09 14:50",status:"Vượt ngưỡng"}]
   },
   "mes-workforce-labor": {
-    eyebrow:"Nguồn nhân lực", title:"Nhân sự & lao động", icon:"users", action:"Nhập báo cáo lao động",
-    description:"Theo dõi cơ cấu lao động, bố trí ca, ngày công, năng suất và tình trạng đào tạo.", sourceMode:"Nhập liệu/Excel · sẵn sàng HRM/Data Lake",
-    tabs:["Cơ cấu","Lao động ca","Ngày công","Năng suất","Đào tạo"],
+    eyebrow:"Nguồn nhân lực", title:"Nhân sự & lao động", icon:"users", action:"Thêm nhân sự",
+    description:"Quản lý hồ sơ nhân sự và theo dõi chức danh, đơn vị, ca công, năng suất, đào tạo; tách biệt với tài khoản đăng nhập Core.", sourceMode:"Nhập liệu/Excel · sẵn sàng HRM/Data Lake",
+    tabs:["Danh sách nhân sự","Hồ sơ nhân sự","Chức danh và đơn vị","Phân ca và ngày công","Năng suất lao động","Đào tạo và chứng chỉ"],
+    tabActions:{
+      "Danh sách nhân sự":"Thêm nhân sự",
+      "Hồ sơ nhân sự":"Bổ sung hồ sơ",
+      "Chức danh và đơn vị":"Thêm chức danh và định biên",
+      "Phân ca và ngày công":"Ghi nhận ca và ngày công",
+      "Năng suất lao động":"Ghi nhận năng suất",
+      "Đào tạo và chứng chỉ":"Thêm đào tạo hoặc chứng chỉ"
+    },
     kpis:[kpi("Lao động hiện có","3.842","98,2% định biên","blue","người"),kpi("Có mặt hôm nay","3.516","91,5% tổng lao động","green","người"),kpi("Năng suất bình quân","6,99","+4,3% cùng kỳ","violet","tấn/công"),kpi("Thiếu vị trí trọng yếu","12","4 đơn vị bị ảnh hưởng","red","vị trí")],
     trendLabel:"Năng suất lao động 7 kỳ",trend:[5.8,6.1,6.0,6.4,6.6,6.8,7.0],
     attention:[attention("Thiếu thợ lò bậc cao ca 3","PX Khai thác 2 thiếu 7 người","Cao"),attention("24 chứng chỉ sắp hết hạn","Huấn luyện lại trong 30 ngày","Trung bình")],
     columns:[{key:"organization",label:"Đơn vị"},{key:"headcount",label:"Hiện có",numeric:true},{key:"present",label:"Có mặt",numeric:true},{key:"absent",label:"Vắng",numeric:true},{key:"output",label:"Sản lượng",numeric:true},{key:"productivity",label:"Năng suất"},{key:"manager",label:"Phụ trách"},{key:"status",label:"Trạng thái"}],
+    tabColumns:{
+      "Danh sách nhân sự":[{key:"employeeCode",label:"Mã nhân sự"},{key:"fullName",label:"Họ và tên"},{key:"organization",label:"Đơn vị"},{key:"position",label:"Chức danh"},{key:"startDate",label:"Ngày bắt đầu"},{key:"endDate",label:"Ngày kết thúc"},{key:"status",label:"Trạng thái"}],
+      "Hồ sơ nhân sự":[{key:"employeeCode",label:"Mã nhân sự"},{key:"fullName",label:"Họ và tên"},{key:"profileType",label:"Loại hồ sơ"},{key:"contact",label:"Liên hệ"},{key:"contractType",label:"Hợp đồng"},{key:"updated",label:"Cập nhật"},{key:"status",label:"Trạng thái"}],
+      "Chức danh và đơn vị":[{key:"positionCode",label:"Mã chức danh"},{key:"position",label:"Chức danh"},{key:"organization",label:"Đơn vị"},{key:"headcount",label:"Hiện có",numeric:true},{key:"quota",label:"Định biên",numeric:true},{key:"manager",label:"Phụ trách"},{key:"status",label:"Trạng thái"}],
+      "Phân ca và ngày công":[{key:"date",label:"Ngày"},{key:"shift",label:"Ca"},{key:"organization",label:"Đơn vị"},{key:"planned",label:"Kế hoạch",numeric:true},{key:"present",label:"Có mặt",numeric:true},{key:"absent",label:"Vắng",numeric:true},{key:"manager",label:"Phụ trách"},{key:"status",label:"Trạng thái"}],
+      "Năng suất lao động":[{key:"organization",label:"Đơn vị"},{key:"period",label:"Kỳ"},{key:"output",label:"Sản lượng",numeric:true},{key:"workdays",label:"Ngày công",numeric:true},{key:"productivity",label:"Năng suất"},{key:"manager",label:"Phụ trách"},{key:"status",label:"Trạng thái"}],
+      "Đào tạo và chứng chỉ":[{key:"employeeCode",label:"Mã nhân sự"},{key:"fullName",label:"Họ và tên"},{key:"course",label:"Khóa học/Chứng chỉ"},{key:"issued",label:"Ngày cấp"},{key:"expires",label:"Hết hạn"},{key:"owner",label:"Đơn vị quản lý"},{key:"status",label:"Trạng thái"}]
+    },
     rows:[{organization:"PX Khai thác 1",headcount:486,present:452,absent:34,output:"8.440 tấn",productivity:"18,67 tấn/công",manager:"Nguyễn Văn Hùng",status:"Đủ nguồn lực"},{organization:"PX Khai thác 2",headcount:472,present:421,absent:51,output:"7.810 tấn",productivity:"18,55 tấn/công",manager:"Trần Văn Nam",status:"Thiếu ca 3"},{organization:"PX Đào lò 2",headcount:318,present:291,absent:27,output:"23 m",productivity:"0,079 m/công",manager:"Lê Văn Bình",status:"Đang theo dõi"}]
   },
   "mes-investment-projects": {

@@ -76,6 +76,13 @@ test("home is a standalone top-level entry and business owns module navigation",
   assert.match(source, /rootItems\.length===0.*Chưa có module được cấp quyền/s);
   assert.match(styles, /\.nav-section-trigger\s*\{/);
   assert.match(styles, /\.nav-section-children\s*\{/);
+  assert.match(source, /className="workspace-tabs"/);
+  assert.match(source, /openTabKeys/);
+  assert.match(source, /closeWorkspaceTab/);
+  assert.match(source, /openTabEntries\.map\(renderWorkspacePage\)/);
+  assert.match(source, /workspace-page/);
+  assert.match(styles, /\.workspace-tabs\s*\{/);
+  assert.match(styles, /\.workspace-page\[hidden\]/);
 });
 
 test("MES baseline v1 exposes the approved 18 screens inside the existing Core shell", async () => {
@@ -86,7 +93,7 @@ test("MES baseline v1 exposes the approved 18 screens inside the existing Core s
   const route = await readFile(new URL("../app/mes/[...path]/page.tsx", import.meta.url), "utf8");
 
   assert.match(shell, /import MesWorkspace/);
-  assert.match(shell, /view\.startsWith\("mes-"\).*<MesWorkspace/s);
+  assert.match(shell, /tabView\.startsWith\("mes-"\).*<MesWorkspace/s);
   for (const view of [
     "mes-dashboard", "mes-planning-performance", "mes-production-operations", "mes-coal-flow",
     "mes-quality-acceptance", "mes-sales-logistics", "mes-materials-equipment", "mes-occupational-safety",
@@ -96,6 +103,15 @@ test("MES baseline v1 exposes the approved 18 screens inside the existing Core s
   ]) assert.match(workspace, new RegExp(`"${view}"`));
   for (const label of ["Kế hoạch & hiệu quả","Sản xuất & điều hành","Chất lượng & nghiệm thu","An toàn lao động","Tài chính & Kế toán","ESG","Portal\/TKV","Tích hợp & chất lượng dữ liệu"])
     assert.match(fixtures, new RegExp(label));
+  for (const workforceTab of ["Danh sách nhân sự","Hồ sơ nhân sự","Chức danh và đơn vị","Phân ca và ngày công","Năng suất lao động","Đào tạo và chứng chỉ"])
+    assert.match(fixtures, new RegExp(workforceTab));
+  assert.match(fixtures, /tabColumns/);
+  assert.match(workspace, /definition\.tabColumns\?\.\[activeTab\]/);
+  assert.match(workspace, /function WorkforceActionForm/);
+  assert.match(workspace, /definition\.tabActions\?\.\[activeTab\]/);
+  assert.match(workspace, /Chưa có nhân sự gốc/);
+  assert.match(fixtures, /"Hồ sơ nhân sự":"Bổ sung hồ sơ"/);
+  assert.match(fixtures, /"Năng suất lao động":"Ghi nhận năng suất"/);
   assert.doesNotMatch(workspace, /Prototype · Chờ API/);
   assert.match(workspace, /Dữ liệu hoạt động/);
   assert.match(workspace, /\/api\/v1\/mes\/modules\/\$\{module\}\/overview/);
@@ -108,7 +124,7 @@ test("MES baseline v1 exposes the approved 18 screens inside the existing Core s
   assert.match(shell, /"\/mes\/warehouse":"\/mes\/coal-flow"/);
   assert.match(route, /export \{ default \} from "\.\.\/\.\.\/page"/);
   assert.doesNotMatch(workspace, /Quản trị hệ thống|Quản trị & phân quyền/);
-  assert.match(shell, /<MesWorkspace view=\{view as MesView\} apiUrl=\{API_URL\}/);
+  assert.match(shell, /<MesWorkspace view=\{tabView as MesView\} apiUrl=\{API_URL\}/);
   assert.match(dailyReporting, /\/api\/v1\/mes\/reporting-calendar/);
   assert.match(dailyReporting, /\/api\/v1\/mes\/import-batches/);
   assert.match(dailyReporting, /\/records\?page=0&size=25/);
@@ -160,12 +176,27 @@ test("MES executive dashboard, inventory reconciliation and master data use live
   assert.match(dashboard, /fixtureKey:"mes-finance-accounting"/);
   assert.match(dashboard, /fixtureKey:"mes-esg"/);
   assert.match(dashboard, /<DomainDashboard domain=\{active\} definition=\{fixture\}/);
+  assert.match(dashboard, /params\.set\("from","executive-dashboard"\)/);
+  assert.match(dashboard, /demoRow/);
+  assert.match(dashboard, /tab="Sản lượng ngày"/);
+  assert.match(dashboard, /tab="Kết quả KCS"/);
+  assert.match(dashboard, /tab:"Nguy cơ"/);
+  assert.match(workspace, /Mở từ Dashboard điều hành/);
+  assert.match(workspace, /dashboard-demo-/);
+  assert.match(workspace, /<OperationalMesWorkspace key=\{view\}/);
+  assert.match(workspace, /addEventListener\("popstate",applyDashboardContext\)/);
   assert.doesNotMatch(dashboard, /Dashboard Ban lãnh đạo/);
   assert.doesNotMatch(dashboard, /mesDemoTables/);
   assert.match(reconciliation, /BALANCED|VARIANCE|INCOMPLETE|MASTER_UNVERIFIED/);
+  assert.match(reconciliation, /Mở từ Dashboard điều hành/);
+  assert.match(reconciliation, /mes-dashboard-highlight/);
+  assert.match(reconciliation, /mes-reconciliation-actions/);
+  assert.match(reconciliation, /mes-reconciliation-refresh/);
   assert.match(masterData, /\/api\/v1\/mes\/master-data\/\$\{path\}/);
   assert.match(masterData, /tab==="products"\?"products":"partners"/);
   assert.match(api, /INVALID_JSON_RESPONSE/);
+  assert.match(api, /\/api\/v1\/auth\/refresh/);
+  assert.match(api, /response\.status===401&&await refreshSession\(apiUrl\)/);
 });
 
 test("ESG login copy, semantic icons and real operations APIs are enforced", async () => {

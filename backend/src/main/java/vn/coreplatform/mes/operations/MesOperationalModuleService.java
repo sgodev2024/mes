@@ -36,6 +36,9 @@ public class MesOperationalModuleService {
       "integration-quality");
   private static final Set<String> STATUSES = Set.of(
       "DRAFT", "IN_PROGRESS", "PENDING_APPROVAL", "APPROVED", "CLOSED", "REJECTED");
+  private static final Set<String> WORKFORCE_TABS = Set.of(
+      "Danh sách nhân sự", "Hồ sơ nhân sự", "Chức danh và đơn vị", "Phân ca và ngày công",
+      "Năng suất lao động", "Đào tạo và chứng chỉ");
 
   private final JdbcTemplate jdbc;
   private final PermissionService permissions;
@@ -64,8 +67,9 @@ public class MesOperationalModuleService {
       String module, String tab, List<KpiView> kpis, List<TrendPoint> trend,
       List<AttentionView> attention, List<RecordView> items, long total) {}
   public record CreateInput(
-      String tab, String title, String organization, String period, BigDecimal value,
-      String unit, String owner, String severity, String source, String note) {}
+      String tab, String title, String organization, String period, BigDecimal value, BigDecimal target,
+      String unit, String owner, String severity, String source, String note, LocalDate occurredOn,
+      LocalDate dueOn, Map<String,Object> details) {}
 
   @Transactional(readOnly = true)
   public Overview overview(
@@ -109,22 +113,97 @@ public class MesOperationalModuleService {
     String period = required(input.period(), "MES_PERIOD_REQUIRED", "Phải chọn kỳ dữ liệu", 30);
     String severity = enumValue(input.severity(), Set.of("LOW", "MEDIUM", "HIGH", "CRITICAL"), "MEDIUM");
     String source = enumValue(input.source(), Set.of("MANUAL", "EXCEL", "API", "DATALAKE"), "MANUAL");
-    String code = safeModule.substring(0, Math.min(3, safeModule.length())).toUpperCase(Locale.ROOT)
+    if (input.occurredOn()!=null && input.dueOn()!=null && input.dueOn().isBefore(input.occurredOn()))
+      throw new ApiProblem(HttpStatus.BAD_REQUEST,"MES_DATE_RANGE_INVALID","Ngày kết thúc không được trước ngày bắt đầu");
+    var details = json.createObjectNode().put("note", text(input.note())).put("createdFrom", "MES_UI");
+    if (safeModule.equals("workforce-labor")) validateAndCopyWorkforceDetails(tenant,tab,input,details);
+    String prefix = safeModule.equals("workforce-labor") ? workforcePrefix(tab)
+        : safeModule.substring(0, Math.min(3, safeModule.length())).toUpperCase(Locale.ROOT);
+    String code = prefix
         + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase(Locale.ROOT);
     UUID id = UUID.randomUUID();
-    var details = json.createObjectNode().put("note", text(input.note())).put("createdFrom", "MES_UI");
+    BigDecimal target = input.target()==null?BigDecimal.valueOf(100):input.target();
+    LocalDate occurredOn = input.occurredOn()==null?LocalDate.now():input.occurredOn();
+    LocalDate dueOn = input.dueOn()==null&&!safeModule.equals("workforce-labor")?occurredOn.plusDays(7):input.dueOn();
     jdbc.update("""
         insert into mes.operational_record(
           id,tenant_id,module_code,tab_name,record_code,title,organization_code,period_key,
           metric_value,target_value,unit_code,owner_name,severity,source_type,status,
           correlation_key,details,occurred_on,due_on,created_by,updated_by)
-        values(?,?,?,?,?,?,?,?,?,100,?,?,?,?,'DRAFT',?,?::jsonb,current_date,current_date+7,?,?)
+        values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,'DRAFT',?,?::jsonb,?,?,?,?)
         """, id, tenant, safeModule, tab, code, title, organization, period,
-        input.value(), clean(input.unit()), clean(input.owner()), severity, source,
-        "MK-" + LocalDate.now() + "-" + organization, details.toString(), actor, actor);
+        input.value(), target, clean(input.unit()), clean(input.owner()), severity, source,
+        "MK-" + occurredOn + "-" + organization, details.toString(), occurredOn, dueOn, actor, actor);
     event(authentication, "mes.operation.created.v1", "MES_OPERATION_CREATED", safeModule, id,
         json.createObjectNode().put("module", safeModule).put("tab", tab).put("code", code));
     return find(tenant, safeModule, id);
+  }
+
+  private void validateAndCopyWorkforceDetails(
+      UUID tenant,String tab,CreateInput input,com.fasterxml.jackson.databind.node.ObjectNode target) {
+    if (!WORKFORCE_TABS.contains(tab))
+      throw new ApiProblem(HttpStatus.BAD_REQUEST,"MES_WORKFORCE_TAB_INVALID","Tab Nhân sự & lao động không hợp lệ");
+    Map<String,Object> source=input.details()==null?Map.of():input.details();
+    switch(tab){
+      case "Danh sách nhân sự" -> {
+        copyRequired(source,target,"fullName","Phải nhập họ và tên nhân sự",160);
+        copyRequired(source,target,"position","Phải nhập chức danh",160);
+      }
+      case "Hồ sơ nhân sự" -> {
+        String employeeCode=copyRequired(source,target,"employeeCode","Phải chọn nhân sự",40);
+        requireEmployee(tenant,employeeCode);
+        copyRequired(source,target,"fullName","Nhân sự không hợp lệ",160);
+        copyRequired(source,target,"profileType","Phải chọn loại hồ sơ",80);
+        copyRequired(source,target,"contractType","Phải chọn loại hợp đồng",80);
+        copyOptional(source,target,"contact",160);
+      }
+      case "Chức danh và đơn vị" -> {
+        copyRequired(source,target,"position","Phải nhập tên chức danh",160);
+        if(input.value()==null||input.target()==null)
+          throw new ApiProblem(HttpStatus.BAD_REQUEST,"MES_WORKFORCE_HEADCOUNT_REQUIRED","Phải nhập hiện có và định biên");
+      }
+      case "Phân ca và ngày công" -> {
+        copyRequired(source,target,"shift","Phải chọn ca làm việc",40);
+        if(input.occurredOn()==null||input.value()==null||input.target()==null)
+          throw new ApiProblem(HttpStatus.BAD_REQUEST,"MES_WORKFORCE_SHIFT_REQUIRED","Phải nhập ngày, kế hoạch và số lao động có mặt");
+        if(input.value().compareTo(input.target())>0)
+          throw new ApiProblem(HttpStatus.BAD_REQUEST,"MES_WORKFORCE_PRESENT_INVALID","Số lao động có mặt không được lớn hơn kế hoạch");
+      }
+      case "Năng suất lao động" -> {
+        if(input.value()==null||input.target()==null||input.target().signum()<=0)
+          throw new ApiProblem(HttpStatus.BAD_REQUEST,"MES_WORKFORCE_PRODUCTIVITY_REQUIRED","Sản lượng và ngày công phải lớn hơn 0");
+      }
+      case "Đào tạo và chứng chỉ" -> {
+        String employeeCode=copyRequired(source,target,"employeeCode","Phải chọn nhân sự",40);
+        requireEmployee(tenant,employeeCode);
+        copyRequired(source,target,"fullName","Nhân sự không hợp lệ",160);
+        copyRequired(source,target,"course","Phải nhập khóa học hoặc chứng chỉ",200);
+        if(input.occurredOn()==null)
+          throw new ApiProblem(HttpStatus.BAD_REQUEST,"MES_WORKFORCE_TRAINING_DATE_REQUIRED","Phải nhập ngày cấp");
+      }
+      default -> throw new ApiProblem(HttpStatus.BAD_REQUEST,"MES_WORKFORCE_TAB_INVALID","Tab Nhân sự & lao động không hợp lệ");
+    }
+  }
+
+  private String workforcePrefix(String tab){return switch(tab){
+    case "Danh sách nhân sự"->"NV";case "Hồ sơ nhân sự"->"HS";case "Chức danh và đơn vị"->"CD";
+    case "Phân ca và ngày công"->"CA";case "Năng suất lao động"->"NS";case "Đào tạo và chứng chỉ"->"DT";
+    default->"NSL";};}
+  private void requireEmployee(UUID tenant,String employeeCode){
+    Integer count=jdbc.queryForObject("""
+        select count(*) from mes.operational_record
+        where tenant_id=? and module_code='workforce-labor' and tab_name='Danh sách nhân sự' and record_code=?
+        """,Integer.class,tenant,employeeCode);
+    if(count==null||count==0)throw new ApiProblem(HttpStatus.BAD_REQUEST,"MES_WORKFORCE_EMPLOYEE_NOT_FOUND","Nhân sự được chọn không còn tồn tại");
+  }
+  private String copyRequired(Map<String,Object> source,com.fasterxml.jackson.databind.node.ObjectNode target,String key,String message,int max){
+    String value=required(source.get(key)==null?null:String.valueOf(source.get(key)),"MES_WORKFORCE_FIELD_REQUIRED",message,max);
+    target.put(key,value);return value;
+  }
+  private void copyOptional(Map<String,Object> source,com.fasterxml.jackson.databind.node.ObjectNode target,String key,int max){
+    String value=text(source.get(key)==null?null:String.valueOf(source.get(key)));
+    if(value.length()>max)throw new ApiProblem(HttpStatus.BAD_REQUEST,"MES_WORKFORCE_FIELD_INVALID","Dữ liệu "+key+" vượt quá độ dài cho phép");
+    target.put(key,value);
   }
 
   @Transactional
@@ -207,12 +286,12 @@ public class MesOperationalModuleService {
     String source=row.getString(14);JsonNode details=read(row.getString(15));int version=row.getInt(16);
     LocalDate occurred=row.getObject(17,LocalDate.class);LocalDate due=row.getObject(18,LocalDate.class);
     Instant updated=row.getTimestamp(19).toInstant();
-    Map<String,Object> data=display(module,code,title,organization,period,actual,target,unit,owner,severity,source,status,occurred,due,details);
+    Map<String,Object> data=display(module,tab,code,title,organization,period,actual,target,unit,owner,severity,source,status,occurred,due,details);
     return new RecordView(id,code,title,tab,status,statusLabel(status),organization,period,correlationKey,sourceLabel(source),severityLabel(severity),version,data,actions(status),updated);
   }
 
   private Map<String,Object> display(
-      String module,String code,String title,String organization,String period,BigDecimal actual,
+      String module,String tab,String code,String title,String organization,String period,BigDecimal actual,
       BigDecimal target,String unit,String owner,String severity,String source,String status,
       LocalDate occurred,LocalDate due,JsonNode details) {
     var data=new LinkedHashMap<String,Object>();String actualText=measure(actual,unit);String targetText=measure(target,unit);
@@ -227,7 +306,7 @@ public class MesOperationalModuleService {
       case "materials-equipment" -> put(data,"code",code,"name",title,"organization",organization,"quantity",actualText,"threshold",targetText,"owner",owner,"updated",date,"status",statusText);
       case "occupational-safety" -> put(data,"code",code,"type",details.path("note").asText("Ghi nhận"),"location",organization,"description",title,"severity",severityLabel(severity),"owner",owner,"due",dueText,"status",statusText);
       case "finance-accounting" -> put(data,"indicator",title,"organization",organization,"period",period,"plan",targetText,"actual",actualText,"variance",variance,"updated",date,"status",statusText);
-      case "workforce-labor" -> put(data,"organization",organization,"headcount",targetText,"present",actualText,"absent",variance,"output",actualText,"productivity",completion,"manager",owner,"status",statusText);
+      case "workforce-labor" -> workforceDisplay(data,tab,code,title,organization,period,actual,target,actualText,targetText,variance,owner,source,statusText,date,dueText,details);
       case "investment-projects" -> put(data,"code",code,"name",title,"budget",targetText,"progress",completion,"disbursement",actualText,"milestone",dueText,"owner",owner,"status",statusText);
       case "science-digital" -> put(data,"code",code,"name",title,"type",details.path("note").asText("Nhiệm vụ"),"progress",completion,"benefit",actualText,"owner",owner,"milestone",dueText,"status",statusText);
       case "alerts-directives" -> put(data,"code",code,"type","Cảnh báo/Chỉ đạo","title",title,"source",sourceLabel(source),"severity",severityLabel(severity),"owner",owner,"due",dueText,"status",statusText);
@@ -242,6 +321,22 @@ public class MesOperationalModuleService {
   private void event(Authentication authentication,String eventType,String action,String module,UUID id,JsonNode payload){
     outbox.publish(permissions.tenantKey(authentication),eventType,"mes-operational-record",id.toString(),payload);
     audits.record(permissions.tenantKey(authentication),permissions.account(authentication),authentication.getName(),action,"MES_OPERATION",id.toString(),"SUCCESS",payload.toString());
+  }
+  private void workforceDisplay(Map<String,Object> data,String tab,String code,String title,String organization,String period,
+      BigDecimal actualValue,BigDecimal targetValue,String actual,String target,String variance,String owner,String source,
+      String status,String date,String due,JsonNode details){
+    String fullName=details.path("fullName").asText(title);
+    String productivity=actualValue==null||targetValue==null||targetValue.signum()==0?"—":
+        actualValue.divide(targetValue,2,RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+    switch(tab){
+      case "Danh sách nhân sự" -> put(data,"employeeCode",code,"fullName",fullName,"organization",organization,"position",details.path("position").asText(owner),"startDate",date,"endDate",due,"status",status);
+      case "Hồ sơ nhân sự" -> put(data,"employeeCode",details.path("employeeCode").asText(code),"fullName",fullName,"profileType",details.path("profileType").asText("Hồ sơ lao động"),"contact",details.path("contact").asText("—"),"contractType",details.path("contractType").asText(source),"updated",date,"status",status);
+      case "Chức danh và đơn vị" -> put(data,"positionCode",code,"position",details.path("position").asText(title),"organization",organization,"headcount",actual,"quota",target,"manager",owner,"status",status);
+      case "Phân ca và ngày công" -> put(data,"date",date,"shift",details.path("shift").asText(code),"organization",organization,"planned",target,"present",actual,"absent",variance,"manager",owner,"status",status);
+      case "Năng suất lao động" -> put(data,"organization",organization,"period",period,"output",actual,"workdays",target,"productivity",productivity,"manager",owner,"status",status);
+      case "Đào tạo và chứng chỉ" -> put(data,"employeeCode",details.path("employeeCode").asText(code),"fullName",fullName,"course",details.path("course").asText(title),"issued",date,"expires",due,"owner",organization,"status",status);
+      default -> put(data,"organization",organization,"headcount",target,"present",actual,"absent",variance,"output",actual,"productivity",productivity,"manager",owner,"status",status);
+    }
   }
 
   private String next(String from,String action){

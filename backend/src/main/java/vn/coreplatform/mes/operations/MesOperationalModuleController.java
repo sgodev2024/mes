@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -33,11 +35,15 @@ public class MesOperationalModuleController {
       @NotBlank @Size(max=80) String organization,
       @NotBlank @Size(max=30) String period,
       @DecimalMin("0") BigDecimal value,
+      @DecimalMin("0") BigDecimal target,
       @Size(max=40) String unit,
       @Size(max=160) String owner,
       @Pattern(regexp="LOW|MEDIUM|HIGH|CRITICAL") String severity,
       @Pattern(regexp="MANUAL|EXCEL|API|DATALAKE") String source,
-      @Size(max=1000) String note) {}
+      @Size(max=1000) String note,
+      LocalDate occurredOn,
+      LocalDate dueOn,
+      Map<String,Object> details) {}
   public record WorkflowRequest(
       @NotBlank @Pattern(regexp="START|SUBMIT|APPROVE|REJECT|CLOSE|REOPEN") String action,
       @Min(1) int expectedVersion) {}
@@ -55,8 +61,8 @@ public class MesOperationalModuleController {
   MesOperationalModuleService.RecordView create(
       @PathVariable String module,@Valid @RequestBody CreateRequest input,Authentication authentication){
     return service.create(authentication,module,new MesOperationalModuleService.CreateInput(
-        input.tab(),input.title(),input.organization(),input.period(),input.value(),input.unit(),
-        input.owner(),input.severity(),input.source(),input.note()));
+        input.tab(),input.title(),input.organization(),input.period(),input.value(),input.target(),input.unit(),
+        input.owner(),input.severity(),input.source(),input.note(),input.occurredOn(),input.dueOn(),input.details()));
   }
 
   @PatchMapping("/{module}/records/{id}/workflow")
